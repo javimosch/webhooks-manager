@@ -1,0 +1,255 @@
+openapi: 3.0.0
+info:
+  title: Webhook Manager API
+  version: 1.0.0
+  description: API for managing webhooks and webhook types
+
+servers:
+  - url: http://localhost:3000/api
+
+paths:
+  /webhook-types:
+    get:
+      summary: Get all webhook types
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/WebhookType'
+    post:
+      summary: Create a new webhook type
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WebhookType'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WebhookType'
+
+  /webhook-types/{id}:
+    put:
+      summary: Update a webhook type
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WebhookType'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WebhookType'
+    delete:
+      summary: Delete a webhook type
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful response
+
+  /webhooks:
+    get:
+      summary: Get all webhooks
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Webhook'
+    post:
+      summary: Create a new webhook
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Webhook'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Webhook'
+
+  /webhooks/{id}:
+    put:
+      summary: Update a webhook
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Webhook'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Webhook'
+    delete:
+      summary: Delete a webhook
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful response
+
+  /run-webhook/{id}:
+    post:
+      summary: Run a specific webhook
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WebhookResult'
+
+  /run-webhook-type/{id}:
+    post:
+      summary: Run all webhooks of a specific type
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/WebhookResult'
+
+  /global-settings:
+    get:
+      summary: Get global settings
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GlobalSettings'
+    put:
+      summary: Update global settings
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GlobalSettings'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GlobalSettings'
+
+components:
+  schemas:
+    WebhookType:
+      type: object
+      properties:
+        name:
+          type: string
+        runType:
+          type: string
+          enum: [parallel, series]
+
+    Webhook:
+      type: object
+      properties:
+        type:
+          type: string
+        title:
+          type: string
+        url:
+          type: string
+        payload:
+          type: object
+        method:
+          type: string
+          enum: [GET, POST, PATCH, DELETE]
+        async:
+          type: boolean
+        timeout:
+          type: integer
+
+    WebhookResult:
+      type: object
+      properties:
+        webhookId:
+          type: string
+        status:
+          type: string
+        statusCode:
+          type: integer
+        data:
+          type: object
+
+    GlobalSettings:
+      type: object
+      properties:
+        globalTimeout:
+          type: integer
+        guiTheme:
+          type: string
+          enum: [light, dark]
+
+security:
+  - basicAuth: []
+
+components:
+  securitySchemes:
+    basicAuth:
+      type: http
+      scheme: basic

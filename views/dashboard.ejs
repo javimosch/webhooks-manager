@@ -1,0 +1,176 @@
+<%- include('_top', { title: 'Dashboard' }) %>
+
+<h1 class="text-3xl font-bold mb-6">Dashboard</h1>
+
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+        <h2 class="text-xl font-semibold mb-4">Webhook Types</h2>
+        <ul class="space-y-2">
+            <% webhookTypes.forEach(function(type) { %>
+                <li>
+                    <a href="/webhook-types/<%= type._id %>/edit" class="text-primary hover:underline"><%= type.name %></a>
+                </li>
+            <% }); %>
+        </ul>
+        <a href="/webhook-types/new" class="mt-4 inline-block bg-primary text-white px-4 py-2 rounded hover:bg-primary-dark">Add New Type</a>
+    </div>
+
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+        <h2 class="text-xl font-semibold mb-4">Webhooks</h2>
+        <ul class="space-y-2">
+            <% webhooks.forEach(function(webhook) { %>
+                <li>
+                    <a href="/webhooks/<%= webhook._id %>/edit" class="text-primary hover:underline"><%= webhook.title %></a>
+                    <span class="text-sm text-gray-500">(<%= webhook.type.name %>)</span>
+                </li>
+            <% }); %>
+        </ul>
+        <a href="/webhooks/new" class="mt-4 inline-block bg-primary text-white px-4 py-2 rounded hover:bg-primary-dark">Add New Webhook</a>
+    </div>
+</div>
+
+<div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6 mb-8">
+    <h2 class="text-xl font-semibold mb-4">Execution Metrics</h2>
+    <div class="mb-4">
+        <label for="filterType" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Filter by Type:</label>
+        <select id="filterType" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm rounded-md">
+            <option value="">All Types</option>
+            <% webhookTypes.forEach(function(type) { %>
+                <option value="<%= type.name %>"><%= type.name %></option>
+            <% }); %>
+        </select>
+    </div>
+    <div class="mb-4">
+        <label for="filterWebhook" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Filter by Webhook:</label>
+        <select id="filterWebhook" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm rounded-md">
+            <option value="">All Webhooks</option>
+            <% webhooks.forEach(function(webhook) { %>
+                <option value="<%= webhook._id %>"><%= webhook.title %></option>
+            <% }); %>
+        </select>
+    </div>
+    <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+        <thead class="bg-gray-50 dark:bg-gray-700">
+            <tr>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Webhook</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Type</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Executions</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Last Execution</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Status</th>
+            </tr>
+        </thead>
+        <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700" id="metricsTableBody">
+            <% executions.forEach(function(execution) { %>
+                <tr data-webhook-id="<%= execution.webhookId %>" data-webhook-type="<%= execution.webhookType %>">
+                    <td class="px-6 py-4 whitespace-nowrap"><%= execution.webhookTitle %></td>
+                    <td class="px-6 py-4 whitespace-nowrap"><%= execution.webhookType %></td>
+                    <td class="px-6 py-4 whitespace-nowrap"><%= execution.count %></td>
+                    <td class="px-6 py-4 whitespace-nowrap"><%= new Date(execution.executions[execution.executions.length - 1].executedAt).toLocaleString() %></td>
+                    <td class="px-6 py-4 whitespace-nowrap"><%= execution.executions[execution.executions.length - 1].status %></td>
+                </tr>
+            <% }); %>
+        </tbody>
+    </table>
+</div>
+
+<div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+    <h2 class="text-xl font-semibold mb-4">Execution Chart</h2>
+    <canvas id="executionChart"></canvas>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/moment"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-moment"></script>
+
+<script>
+    const executionsData = <%- JSON.stringify(executions) %>;
+    const webhookTypes = <%- JSON.stringify(webhookTypes.map(t => t.name)) %>;
+
+    // Prepare data for the chart
+    const chartData = prepareChartData(executionsData);
+
+    // Create the chart
+    const ctx = document.getElementById('executionChart').getContext('2d');
+    const chart = new Chart(ctx, {
+        type: 'line',
+        data: chartData,
+        options: {
+            responsive: true,
+            scales: {
+                x: {
+                    type: 'time',
+                    time: {
+                        unit: 'day'
+                    }
+                },
+                y: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Number of Executions'
+                    }
+                }
+            }
+        }
+    });
+
+    // Filter functions
+    document.getElementById('filterType').addEventListener('change', filterMetrics);
+    document.getElementById('filterWebhook').addEventListener('change', filterMetrics);
+
+    function filterMetrics() {
+        const typeFilter = document.getElementById('filterType').value;
+        const webhookFilter = document.getElementById('filterWebhook').value;
+        const rows = document.querySelectorAll('#metricsTableBody tr');
+
+        rows.forEach(row => {
+            const rowType = row.getAttribute('data-webhook-type');
+            const rowWebhookId = row.getAttribute('data-webhook-id');
+            const typeMatch = !typeFilter || rowType === typeFilter;
+            const webhookMatch = !webhookFilter || rowWebhookId === webhookFilter;
+            row.style.display = typeMatch && webhookMatch ? '' : 'none';
+        });
+
+        // Update chart data based on filters
+        const filteredData = prepareChartData(executionsData, typeFilter, webhookFilter);
+        chart.data = filteredData;
+        chart.update();
+    }
+
+    function prepareChartData(data, typeFilter = '', webhookFilter = '') {
+        const datasets = webhookTypes.map(type => ({
+            label: type,
+            data: [],
+            borderColor: getRandomColor(),
+            fill: false
+        }));
+
+        data.forEach(execution => {
+            if ((!typeFilter || execution.webhookType === typeFilter) &&
+                (!webhookFilter || execution.webhookId === webhookFilter)) {
+                const typeIndex = webhookTypes.indexOf(execution.webhookType);
+                execution.executions.forEach(exec => {
+                    datasets[typeIndex].data.push({
+                        x: new Date(exec.executedAt),
+                        y: 1
+                    });
+                });
+            }
+        });
+
+        return {
+            datasets: datasets.filter(dataset => dataset.data.length > 0)
+        };
+    }
+
+    function getRandomColor() {
+        const letters = '0123456789ABCDEF';
+        let color = '#';
+        for (let i = 0; i < 6; i++) {
+            color += letters[Math.floor(Math.random() * 16)];
+        }
+        return color;
+    }
+</script>
+
+<%- include('_bottom') %>

@@ -1,0 +1,26 @@
+<%- include('_top', { title: 'Webhook Execution Result' }) %>
+
+<h1 class="text-3xl font-bold mb-6">Webhook Execution Result</h1>
+
+<div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+    <h2 class="text-xl font-semibold mb-4"><%= webhook.title %></h2>
+    <p class="mb-2"><strong>URL:</strong> <%= webhook.url %></p>
+    <p class="mb-2"><strong>Method:</strong> <%= webhook.method %></p>
+    <p class="mb-4"><strong>Async:</strong> <%= webhook.async ? 'Yes' : 'No' %></p>
+
+    <h3 class="text-lg font-semibold mb-2">Result:</h3>
+    <% if (webhook.async) { %>
+        <p><%= result.message %></p>
+    <% } else { %>
+        <p class="mb-2"><strong>Status:</strong> <%= result.status %></p>
+        <pre class="bg-gray-100 dark:bg-gray-700 p-4 rounded overflow-x-auto">
+            <code><%= JSON.stringify(result.data, null, 2) %></code>
+        </pre>
+    <% } %>
+</div>
+
+<div class="mt-6">
+    <a href="/webhooks" class="px-4 py-2 bg-primary text-white rounded hover:bg-primary-dark">Back to Webhooks</a>
+</div>
+
+<%- include('_bottom') %>
