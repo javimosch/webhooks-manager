@@ -252,4 +252,38 @@ components:
   securitySchemes:
     basicAuth:
       type: http
-      scheme: basic
+      scheme: basiccomponents:
+  securitySchemes:
+    sessionAuth:
+      type: apiKey
+      in: cookie
+      name: connect.sid
+
+paths:
+  /login:
+    post:
+      summary: User login
+      responses:
+        '200':
+          description: Successful login
+          content:
+            application/json:    
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+
+  /logout:
+    post:
+      summary: User logout
+      responses:
+        '200':
+          description: Successful logout
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
