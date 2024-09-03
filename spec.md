@@ -22,6 +22,8 @@
 
 ## Pending user stories
 
+- US19: As app, I support session based auth that stores session in mongo
+
 - US:19: As app, I support session based auth that stores session in mongo
 - US20: As user, I'm redirected to a register view after clicking an invite link, so that I can setup my password
 - US21: As user, I'm redirected to the billing screen once I setup my password, if billing is not set
