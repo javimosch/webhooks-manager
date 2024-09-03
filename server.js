@@ -1,5 +1,6 @@
 require("dotenv").config();
 const express = require("express");
+const User = require("./models/User");
 const mongoose = require("mongoose");
 const session = require("express-session");
 const MongoStore = require("connect-mongo");
