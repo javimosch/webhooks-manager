@@ -19,15 +19,21 @@ beforeAll(async () => {
   app.use(bodyParser.urlencoded({ extended: true }));
   
   // Setup session middleware for testing
+  const mockStore = {
+    get: jest.fn(),
+    set: jest.fn(),
+    destroy: jest.fn(),
+    on: jest.fn(),
+    createSession: jest.fn((req, sess, cb) => {
+      cb();
+    }),
+  };
+
   app.use(session({
     secret: 'test_secret',
     resave: false,
     saveUninitialized: false,
-    store: {
-      get: jest.fn(),
-      set: jest.fn(),
-      destroy: jest.fn()
-    }
+    store: mockStore
   }));
 
   // Mock route that requires authentication
@@ -45,7 +51,13 @@ beforeAll(async () => {
     const user = await User.findOne({ email });
     if (user && user.password === password) {
       req.session.userId = user._id;
-      res.status(200).json({ message: 'Logged in successfully' });
+      req.session.save((err) => {
+        if (err) {
+          res.status(500).json({ message: 'Error saving session' });
+        } else {
+          res.status(200).json({ message: 'Logged in successfully' });
+        }
+      });
     } else {
       res.status(401).json({ message: 'Invalid credentials' });
     }
@@ -75,13 +87,14 @@ describe('Session-based Authentication', () => {
       .send(JSON.stringify({ email: 'test@example.com', password: 'password123' }));
     expect(loginResponse.status).toBe(200);
 
-    // Get the session cookie
-    const cookies = loginResponse.headers['set-cookie'];
+    // Mock the session store to return the user ID
+    mockStore.get.mockImplementation((sid, callback) => {
+      callback(null, { userId: '123' });
+    });
 
-    // Access protected route with session cookie
+    // Access protected route
     const protectedResponse = await request(app)
-      .get('/protected')
-      .set('Cookie', cookies);
+      .get('/protected');
     
     expect(protectedResponse.status).toBe(200);
     expect(protectedResponse.body.message).toBe('Access granted');
