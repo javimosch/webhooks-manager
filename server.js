@@ -55,7 +55,7 @@ app.use('/api', auth, require('./routes/api'));
 app.use('/', auth, require('./routes/gui'));
 
 // New route for email and invite code verification
-app.post('/invite', auth, async (req, res) => {
+app.post('/invite', async (req, res) => {
   const { email, inviteCode } = req.body;
   const validInviteCodes = process.env.INVITES_CODES.split(',');
 
