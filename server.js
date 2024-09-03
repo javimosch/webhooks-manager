@@ -54,6 +54,24 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use('/api', auth, require('./routes/api'));
 app.use('/', auth, require('./routes/gui'));
 
+// New route for email and invite code verification
+app.post('/invite', auth, async (req, res) => {
+  const { email, inviteCode } = req.body;
+  const validInviteCodes = process.env.INVITES_CODES.split(',');
+
+  if (!validInviteCodes.includes(inviteCode)) {
+    return res.status(401).json({ message: 'Invalid invite code' });
+  }
+
+  try {
+    const newUser = new User({ email });
+    await newUser.save();
+    res.status(200).json({ message: 'User created successfully' });
+  } catch (err) {
+    res.status(500).json({ message: 'Error creating user', error: err.message });
+  }
+});
+
 // Swagger documentation
 const swaggerDocument = YAML.load('./swagger.yaml');
 app.use('/api-docs', auth, swaggerUi.serve, swaggerUi.setup(swaggerDocument));
