@@ -3,7 +3,7 @@ const express = require("express");
 const User = require("./models/User");
 const mongoose = require("mongoose");
 const session = require("express-session");
-const MongoStore = require("connect-mongo").default;
+const MongoStore = require("connect-mongo");
 const bodyParser = require("body-parser");
 const swaggerUi = require("swagger-ui-express");
 const YAML = require("yamljs");
@@ -15,6 +15,7 @@ const app = express();
 
 // Connect to MongoDB
 const mongoUri = `${process.env.MONGODB_URI}`;
+
 mongoose
   .connect(mongoUri, {
     dbName: process.env.DB_NAME,
@@ -33,7 +34,10 @@ app.use(
     secret: process.env.SESSION_SECRET,
     resave: false,
     saveUninitialized: false,
-    store: MongoStore.create({ mongoUrl: mongoUri }),
+    store: MongoStore.create({
+      mongoUrl: mongoUri,
+      dbName: process.env.DB_NAME,
+    }),
   }),
 );
 
